@@ -1,0 +1,63 @@
+<!DOCTYPE "html">
+<html>
+<head>
+    <title>IP Geolocation Teszt</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; }
+        .info { background: #f0f0f0; padding: 20px; border-radius: 8px; display: inline-block; }
+        .ip { font-size: 24px; font-weight: bold; color: #333; }
+        .btn { margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="info">
+        <h2>Az Ön nyilvános IP címe:</h2>
+        <p id="ip-address" class="ip">Betöltés...</p>
+        <p id="location">Helyszín: Kiszámítás alatt...</p>
+        <button class="btn" onclick="copyIP()">IP másolása</button>
+    </div>
+
+    <script>
+        // 1. lépés: API hívás az IP lekérdezására (ipify.org ingyenes szolgáltatása)
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                const userIP = data.ip;
+                document.getElementById('ip-address').innerText = userIP;
+
+                // 2. lépés: Geolokáció lekérése ugyanabból az API-ból (vagy másikat használva, pl. ip-api.com)
+                fetch(`http://ip-api.com/json/${userIP}?fields=status,message,country,city,lat,lon`)
+                    .then(res => res.json())
+                    .then(locData => {
+                        if(locData.status === 'success') {
+                            document.getElementById('location').innerText = 
+                                `Helyszín: ${locData.city}, ${locData.country}`;
+                            
+                            // Opcionális: Küldés egy "szervernek" vagy logolás (itt csak console-ba írjuk)
+                            console.log(`IP: ${userIP} | Location: ${locData.city}, ${locData.country}`);
+                        } else {
+                            document.getElementById('location').innerText = "Nem sikerült meghatározni a helyszínt.";
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Hiba:', error);
+                        document.getElementById('location').innerText = "Geolokáció hiba.";
+                    });
+            })
+            .catch(error => {
+                console.error('Hiba az IP lekérésekor:', error);
+                document.getElementById('ip-address').innerText = "Nem sikerült lekérni az IP-t.";
+            });
+
+        // Másolás funkció
+        function copyIP() {
+            const ipText = document.getElementById('ip-address').innerText;
+            navigator.clipboard.writeText(ipText).then(() => {
+                alert("IP másolva: " + ipText);
+            });
+        }
+    </script>
+
+</body>
+</html>
